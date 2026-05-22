@@ -8,7 +8,7 @@ The system processes uploaded documents, generates embeddings using Sentence Tra
 
 # System Architecture
 
-![System Architecture](assets/system_architecture.png)
+![System Architecture](assets/system-architecture.png)
 
 ---
 
