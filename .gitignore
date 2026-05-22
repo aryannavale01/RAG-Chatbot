@@ -1,0 +1,22 @@
+# Virtual Environment
+.venv/
+
+# Environment Variables
+.env
+
+# Uploaded Files
+data/
+
+# Vector Database
+vectorstore/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Streamlit Cache
+.streamlit/
+
+# OS Files
+.DS_Store
+Thumbs.db
