@@ -8,19 +8,27 @@ The system processes uploaded documents, generates embeddings using Sentence Tra
 
 # System Architecture
 
-![System Architecture](assets/system-architecture.png)
+![System Architecture](assets/new-system-architecture.png)
 
 ---
 
 # Application Interface Preview
 
+## Main Interface
+
+![Main Interface](assets/start.png)
+
 ## Chat Interface
 
-![Chat Interface](assets/ss1.png)
+![Chat Interface](assets/ss.png)
 
-## Chat With PDFs
+## Q&A Session
 
-![Chat With PDFs](assets/ss2.png)
+![Q&A](assets/qa.png)
+
+## Q&A Continued
+
+![Q&A 2](assets/qa2.png)
 
 ---
 
@@ -44,8 +52,9 @@ The system processes uploaded documents, generates embeddings using Sentence Tra
 | Component | Technology |
 |---|---|
 | LLM | Groq Llama 3.3 |
-| Embeddings | Sentence Transformers |
+| Embeddings | Sentence Transformers (384-dim) |
 | Vector Database | FAISS |
+| Keyword Search | BM25 (Hybrid Retriever) |
 | Framework | LangChain |
 | Frontend | Streamlit |
 | Backend | Python |
@@ -58,38 +67,87 @@ The system processes uploaded documents, generates embeddings using Sentence Tra
 ```text
 RAG/
 │
-├── app.py
-├── data_pipeline.py
-├── generation_pipeline.py
-├── loader.py
+├── app.py                       # Streamlit UI
+├── settings.py                  # Centralized configuration
+├── config.py                    # Prompt templates
+├── loader.py                    # Document loaders
 ├── requirements.txt
 ├── .env
+├── .env.example
 ├── README.md
+│
+├── modules/                     # Modular components
+│   ├── __init__.py
+│   ├── llm.py                  # LLM initialization
+│   ├── embeddings.py           # Vector store management
+│   ├── retrievers.py           # BM25 + Hybrid retriever
+│   ├── document_processor.py   # Document chunking/loading
+│   └── chains.py               # QA chain orchestration
 │
 ├── data/
 │   └── uploaded_files/
 │
 ├── vectorstore/
-│   └── db_faiss/
+│   ├── db_faiss/               # FAISS index
+│   ├── chunks.pkl              # BM25 chunks persistence
+│   └── docs.pkl
 │
 └── assets/
-    ├── system_architecture.png
-    ├── ss1.png
-    └── ss2.png
+    ├── new-system-architecture.png
+    ├── start.png
+    ├── ss.png
+    ├── qa.png
+    └── qa2.png
 ```
 
 ---
 
 # Supported File Types
 
-- PDF
-- TXT
-- CSV
-- DOC
-- DOCX
-- Markdown Files
+- PDF (`.pdf`)
+- Text (`.txt`)
+- CSV (`.csv`)
+- Word Documents (`.doc`, `.docx`)
+- Excel (`.xlsx`)
+- Markdown (`.md`)
+- HTML (`.html`)
+- XML (`.xml`)
+- JSON (`.json`)
+- PowerPoint (`.pptx`)
 
-The system can process multiple documents together and create a unified knowledge base for retrieval.
+The system processes multiple documents together and creates a unified knowledge base for retrieval.
+
+---
+
+# Configuration
+
+All settings are stored in `.env` file and managed by `settings.py`:
+
+```env
+# LLM Configuration
+GROQ_API_KEY=your_key_here
+GROQ_MODEL_NAME=llama-3.3-70b-versatile
+LLM_TEMPERATURE=0.5
+LLM_MAX_TOKENS=2048
+
+# Embedding Configuration
+EMBEDDING_MODEL_NAME=sentence-transformers/all-MiniLM-L6-v2
+
+# Retriever Configuration
+FAISS_SEARCH_K=3
+BM25_SEARCH_K=5
+BM25_WEIGHT=0.3
+FAISS_WEIGHT=0.7
+
+# Text Processing
+CHUNK_SIZE=500
+CHUNK_OVERLAP=50
+
+# UI Configuration
+STREAMLIT_PAGE_TITLE=RAG Chatbot
+DISPLAY_CONTENT_LENGTH=500
+MAX_FILE_SIZE_MB=50
+```
 
 ---
 
@@ -196,6 +254,49 @@ LLM Generates Response
     ↓
 Answer + Sources Displayed
 ```
+
+---
+
+# Hybrid Retriever: BM25 + FAISS
+
+The system uses a **Hybrid Retriever** combining two complementary search strategies:
+
+## BM25 (Keyword Search)
+- **Algorithm**: Best Match 25 (probabilistic ranking)
+- **Type**: Sparse retriever
+- **Strength**: Excellent for exact keyword matches
+- **Configuration**: `k=5` (top 5 results), weight=0.3
+- **Use Case**: Finds documents with specific terms or names
+
+## FAISS (Semantic Search)
+- **Algorithm**: Similarity search using embeddings
+- **Type**: Dense retriever
+- **Strength**: Captures semantic meaning and context
+- **Configuration**: `k=3` (top 3 results), weight=0.7
+- **Use Case**: Understands intent and finds conceptually related content
+
+## How It Works Together
+
+```text
+Query
+    ├─→ BM25 Search (30% weight)
+    │   └─→ Returns 5 keyword-matched documents
+    │
+    ├─→ FAISS Search (70% weight)
+    │   └─→ Returns 3 semantically similar documents
+    │
+    └─→ EnsembleRetriever
+        └─→ Combines & ranks results
+        └─→ Returns best matches to LLM
+```
+
+## Benefits
+
+- **Comprehensive**: Catches both keyword and semantic matches
+- **Balanced**: Configurable weights (0.3/0.7 default)
+- **Robust**: Falls back to FAISS if BM25 chunks unavailable
+- **Efficient**: FAISS handles large-scale similarity search
+- **Flexible**: Easy to adjust weights in `.env`
 
 ---
 
