@@ -163,11 +163,65 @@ Answer:
 # ===========================
 
 
+def reload_settings():
+    """Re-read all settings from environment variables (after .env changes)."""
+    global DATA_FOLDER, UPLOAD_FOLDER, VECTORSTORE_FOLDER
+    global DB_FAISS_PATH, CHUNKS_PATH, DOCS_PATH
+    global GROQ_API_KEY, GROQ_MODEL_NAME, LLM_TEMPERATURE, LLM_MAX_TOKENS
+    global EMBEDDING_MODEL_NAME
+    global FAISS_SEARCH_K, BM25_SEARCH_K, BM25_WEIGHT, FAISS_WEIGHT
+    global CHUNK_SIZE, CHUNK_OVERLAP
+    global CHAIN_TYPE, RETURN_SOURCE_DOCUMENTS
+    global \
+        STREAMLIT_PAGE_TITLE, \
+        STREAMLIT_PAGE_ICON, \
+        MAX_SOURCE_DOCS_DISPLAY, \
+        DISPLAY_CONTENT_LENGTH
+    global MAX_FILE_SIZE_MB
+
+    DATA_FOLDER = Path(os.getenv("DATA_FOLDER", "data"))
+    UPLOAD_FOLDER = Path(os.getenv("UPLOAD_FOLDER", "data/uploaded_files"))
+    VECTORSTORE_FOLDER = Path(os.getenv("VECTORSTORE_FOLDER", "vectorstore"))
+    DB_FAISS_PATH = VECTORSTORE_FOLDER / os.getenv("DB_FAISS_NAME", "db_faiss")
+    CHUNKS_PATH = VECTORSTORE_FOLDER / os.getenv("CHUNKS_FILE", "chunks.pkl")
+    DOCS_PATH = VECTORSTORE_FOLDER / os.getenv("DOCS_FILE", "docs.pkl")
+
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL_NAME = os.getenv("GROQ_MODEL_NAME", "llama-3.3-70b-versatile")
+    LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.5"))
+    LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "2048"))
+
+    EMBEDDING_MODEL_NAME = os.getenv(
+        "EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"
+    )
+
+    FAISS_SEARCH_K = int(os.getenv("FAISS_SEARCH_K", "3"))
+    BM25_SEARCH_K = int(os.getenv("BM25_SEARCH_K", "5"))
+    BM25_WEIGHT = float(os.getenv("BM25_WEIGHT", "0.3"))
+    FAISS_WEIGHT = float(os.getenv("FAISS_WEIGHT", "0.7"))
+
+    CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "500"))
+    CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "50"))
+
+    CHAIN_TYPE = os.getenv("CHAIN_TYPE", "stuff")
+    RETURN_SOURCE_DOCUMENTS = (
+        os.getenv("RETURN_SOURCE_DOCUMENTS", "true").lower() == "true"
+    )
+
+    STREAMLIT_PAGE_TITLE = os.getenv("STREAMLIT_PAGE_TITLE", "Ask Chatbot")
+    STREAMLIT_PAGE_ICON = os.getenv("STREAMLIT_PAGE_ICON", " ")
+    MAX_SOURCE_DOCS_DISPLAY = int(os.getenv("MAX_SOURCE_DOCS_DISPLAY", "5"))
+    DISPLAY_CONTENT_LENGTH = int(os.getenv("DISPLAY_CONTENT_LENGTH", "500"))
+
+    MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "50"))
+
+
 def validate_settings():
     """Validate that required settings are configured"""
     errors = []
 
-    if not GROQ_API_KEY:
+    api_key = os.environ.get("GROQ_API_KEY", GROQ_API_KEY)
+    if not api_key:
         errors.append("GROQ_API_KEY not set in .env")
 
     if not UPLOAD_FOLDER.exists():
